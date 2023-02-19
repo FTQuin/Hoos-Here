@@ -12,27 +12,51 @@ import {useRouter} from 'next/router';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Image from "next/image";
+import { useQRCode } from 'next-qrcode';
+
 
 
 // **** **** Components **** ****
 // **** QRCode Component ****
 function QRCode() {
     // **** HTML ****
-    return(
-        <div>
-            <h2>QR Code</h2>
-            <Image src="/placeholder.png" alt="place" width={100} height={100}></Image>
+    const { SVG } = useQRCode();
+
+    return (
+        <div className={"border-orange-600 border p-2"}>
+            <SVG
+                //TODO: make link work in production
+                text={'http://localhost:3001/attend'}
+                options={{
+                    level: 'L',
+                    margin: 3,
+                    scale: 4,
+                    width: 200,
+                    color: {
+                        dark: '#e8570c',
+                        light: '#ffffff',
+                    },
+                }}
+            />
         </div>
     );
 }
 
 // **** LiveResults Component ****
 function LiveResults() {
+    let percent = 45
     // **** HTML ****
     return(
-        <div>
+        <div className={"border-orange-600 border p-2"}>
             <h2>Live Results</h2>
-            <Image src="/placeholder.png" alt="place" width={100} height={100}></Image>
+            <p>Student McStudentson</p>
+            <div className="w-full bg-gray-200 rounded-full dark:bg-gray-700">
+                <div
+                    className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                    style={{width: String(percent)+'%'}}> {percent}%
+                </div>
+            </div>
+
         </div>
     );
 }
@@ -41,9 +65,11 @@ function LiveResults() {
 function ManualAttendance() {
     // **** HTML ****
     return(
-        <div>
-            <h2>Manual Attendance</h2>
-            <Image src="/placeholder.png" alt="place" width={100} height={100}></Image>
+        <div className={"grid grid-cols-2 gap-3 border-orange-600 border p-2"}>
+            <div className={"col-span-2"}>Manual Attendance</div>
+            <div>Name</div><div>Status</div>
+            <div>John</div><div>Here</div>
+            <div>Dave</div><div>Away</div>
         </div>
     );
 }

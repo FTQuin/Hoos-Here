@@ -10,18 +10,25 @@ import Head from 'next/head'
 import {useRouter} from 'next/router';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import {getDocs, onSnapshot, query, where} from "@firebase/firestore";
+import {collection, doc, getDoc} from "firebase/firestore";
+import {db, app} from "../firebase/firebase";
+import {getAuth, onAuthStateChanged} from "@firebase/auth";
+import {Key, ReactElement, useEffect, useState} from "react";
+import {useAuthState} from "react-firebase-hooks/auth";
 
 
 // **** **** Components **** ****
 // **** CourseCard Component ****
-function CourseCard({course_name}: {course_name: string}) {
+function CourseCard({course_name}: { course_name: string }) {
     // Next.js router
     const router = useRouter()
 
     // **** HTML ****
     return (
         <>
-            <div className="flex items-center flex-col text-orange-50 bg-orange-600 rounded-lg p-3 min-w-[300px] max-w-[400px]">
+            <div
+                className="flex items-center flex-col text-orange-50 bg-orange-600 rounded-lg p-3 min-w-[300px] max-w-[400px]">
                 {/*Title*/}
                 <h2 className="text-xl">{course_name}</h2>
                 <div className="flex">
@@ -47,29 +54,68 @@ const Dashboard: NextPage = () => {
     // Next.js router
     const router = useRouter()
 
-    // dummy course names
-    // TODO: make real course names
-    let course_names = ["Test Course 123", "Course 456", "Rourse 789"]
+    // auth vars
+    const auth = getAuth(app)
+    const [user, userLoading, userErr] = useAuthState(auth)
+    // name for CourseCards
+    const [courseNames, setCourseNames]: [Array<string>, any] = useState([]);
+
+    // get course names
+    // need to use useEffect because query will only work if user is logged in
+    useEffect( () => {
+        // guard clauses
+        if (userLoading) return;
+        if (user == null || userErr){
+            router.push('/')
+            return
+        }
+
+        // get course data from Firebase
+        const getCourseNames = async () => {
+            let snap = await getDoc(doc(db, "users/" + user.uid))
+            // @ts-ignore
+            let courses = snap.data()['courses']
+            if (!courses){
+                setCourseNames([])
+                return
+            }
+
+            // get users courses
+            let tempCourseNames = []
+            for (let courseRef of courses) {
+                let cSnap = await getDoc(courseRef)
+                // @ts-ignore
+                tempCourseNames.push(cSnap.data()['name'])
+            }
+            // @ts-ignore
+            setCourseNames(tempCourseNames)
+        }
+        getCourseNames()
+    }, [userLoading])
+
+    // **** HTML ****
     return (
         <>
             {/* Meta Data */}
             <Head>
                 <title>Hoos Here</title>
-                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
+                <link rel="stylesheet"
+                      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"></link>
             </Head>
 
             {/* Start of Wrapper */}
             <div className="flex flex-col bg-white min-h-screen border-orange-600 border-l border-r">
                 {/* Header */}
-                <Header />
+                <Header/>
 
                 {/* Start of Main Content */}
                 <main className="flex justify-center ">
                     <div className="grid grid-cols-2 gap-5 p-5 max-w-screen-md">
-                    {/*CourseCard loop*/}
-                    {course_names.map((name) => (
-                        <CourseCard key={name[0]} course_name={name} />
-                    ))}
+                        {/*CourseCard loop*/}
+                        {courseNames.map((name) => {
+                                return <CourseCard key={name} course_name={name}/>
+                            })
+                        }
                     </div>
                 </main>
                 {/* End of Main Content */}
